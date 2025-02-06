@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@repo/ui": "workspace:*",
+    "@repo/config": "workspace:*"
+  }
+} 

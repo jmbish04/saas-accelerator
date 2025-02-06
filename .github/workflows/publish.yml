@@ -1,0 +1,14 @@
+name: Publish
+on:
+  push:
+    tags: ['v*']
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v2
+      - run: pnpm install
+      - run: npm run jsr:publish
+        env:
+          JSR_TOKEN: ${{ secrets.JSR_TOKEN }} 

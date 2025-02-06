@@ -1,4 +1,4 @@
-import { type Config } from "tailwindcss";
+import { type Config } from "@repo/config";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
 export default {

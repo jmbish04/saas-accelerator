@@ -1,0 +1,21 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "tsup src/index.ts --minify",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@repo/db": "workspace:*",
+    "hono": "^4.0.10",
+    "drizzle-orm": "^0.28.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20231102.0",
+    "wrangler": "^3.15.0",
+    "tsup": "^7.2.0",
+    "typescript": "^5.3.3"
+  }
+} 

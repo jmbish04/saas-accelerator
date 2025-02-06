@@ -1,5 +1,5 @@
 {
-  "name": "@saasforge/cloudflare-starter",
+  "name": "saas-accelerator",
   "version": "1.0.0",
   "exports": {
     "./*": "./*"

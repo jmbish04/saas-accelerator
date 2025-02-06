@@ -1,0 +1,38 @@
+{
+  "name": "saas-accelerator",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "db:generate": "turbo run db:generate",
+    "db:migrate": "turbo run db:migrate",
+    "lint": "turbo run lint",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "turbo": "latest",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.11.0"
+  },
+  "packageManager": "npm@9.9.2",
+  "turbo": {
+    "pipeline": {
+      "dev": {
+        "cache": false
+      },
+      "build": {
+        "outputs": ["dist/**", "build/**"]
+      },
+      "test": {
+        "outputs": []
+      }
+    }
+  }
+} 

@@ -45,8 +45,15 @@ cd saas-starter
 
 2. Install dependencies:
 ```bash
+# Install JSR CLI using pnpm
+pnpm add -g @jsr/cli
+
+# Then install all dependencies
 jsr install
-npm install
+pnpm install
+
+# Alternative single-command approach
+pnpm dlx @jsr/cli@latest install && pnpm install
 ```
 
 3. Set up environment variables:
@@ -143,4 +150,3 @@ npm run test:ci # Runs all tests in CI mode
 - **Logging:** Logflare pipeline
 - **Performance:** Cloudflare Analytics
 - **Uptime:** Cloudflare Status Monitoring
-

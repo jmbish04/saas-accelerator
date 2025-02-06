@@ -7,9 +7,9 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "turbo run dev",
-    "build": "turbo run build",
-    "test": "turbo run test",
+    "dev": "pnpm turbo run dev",
+    "build": "pnpm turbo run build",
+    "test": "pnpm turbo run test",
     "db:generate": "turbo run db:generate",
     "db:migrate": "turbo run db:migrate",
     "lint": "turbo run lint",
@@ -21,7 +21,7 @@
     "typescript": "^5.3.3",
     "@types/node": "^20.11.0"
   },
-  "packageManager": "npm@9.9.2",
+  "packageManager": "pnpm@8.15.3",
   "turbo": {
     "pipeline": {
       "dev": {

@@ -1,58 +1,167 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
-import { secureHeaders } from "hono/secure-headers";
-import { authMiddleware } from "./middleware/auth";
-import { rateLimiter } from "./middleware/rate-limit";
-import { stripeWebhook } from "./lib/stripe";
-import { createCheckoutSession } from "./services/subscription";
-import { storageRouter } from "./services/storage";
-import { adminRouter } from "./routes/admin";
+import { PermitDataService } from "./services/permit-data";
+import { PermitAIService } from "./services/permit-ai";
 
-const app = new Hono();
+type Bindings = {
+  DB: D1Database;
+  AI: any;
+};
+
+const app = new Hono<{ Bindings: Bindings }>();
 
 // Base middleware
 app.use("*", 
   logger(),
-  secureHeaders(),
   cors({
-    origin: process.env.CORS_ORIGINS?.split(",") || [],
-    credentials: true,
-  }),
-  rateLimiter()
+    origin: "*", // Allow all origins for public API
+    credentials: false,
+  })
 );
-
-// Admin routes
-app.route("/api/admin", adminRouter);
-
-// Storage routes
-app.route("/storage", storageRouter);
-
-// Stripe webhook
-app.route("/stripe", stripeWebhook);
 
 // Health check
 app.get("/health", (c) => c.text("OK"));
 
-// Protected routes
-app.get("/api/user", authMiddleware, async (c) => {
-  const user = c.get("user");
-  return c.json(user);
+// Data import endpoint
+app.post("/api/import-permits", async (c) => {
+  try {
+    const permitService = new PermitDataService(c.env.DB);
+    const { limit } = await c.req.json().catch(() => ({ limit: 1000 }));
+    
+    const result = await permitService.importFromSocrata(limit);
+    return c.json({
+      success: true,
+      message: `Import completed: ${result.imported} permits imported, ${result.errors} errors`,
+      ...result
+    });
+  } catch (error) {
+    console.error("Import error:", error);
+    return c.json({ error: "Failed to import permit data" }, 500);
+  }
 });
 
-// Subscription routes
-app.post("/api/subscribe", authMiddleware, async (c) => {
-  const user = c.get("user");
-  const { plan } = await c.req.json();
-  
-  const session = await createCheckoutSession(
-    user.id,
-    plan,
-    `${process.env.FRONTEND_URL}/success`,
-    `${process.env.FRONTEND_URL}/cancel`
-  );
-  
-  return c.json({ url: session.url });
+// Get permit statistics
+app.get("/api/permits/stats", async (c) => {
+  try {
+    const permitService = new PermitDataService(c.env.DB);
+    const stats = await permitService.getPermitStats();
+    return c.json(stats);
+  } catch (error) {
+    console.error("Stats error:", error);
+    return c.json({ error: "Failed to fetch permit statistics" }, 500);
+  }
+});
+
+// Get permits with pagination
+app.get("/api/permits", async (c) => {
+  try {
+    const permitService = new PermitDataService(c.env.DB);
+    const limit = parseInt(c.req.query("limit") || "100");
+    const offset = parseInt(c.req.query("offset") || "0");
+    
+    const permits = await permitService.getPermits(limit, offset);
+    return c.json({
+      permits,
+      pagination: {
+        limit,
+        offset,
+        hasMore: permits.length === limit
+      }
+    });
+  } catch (error) {
+    console.error("Permits error:", error);
+    return c.json({ error: "Failed to fetch permits" }, 500);
+  }
+});
+
+// Get permits for map visualization
+app.get("/api/permits/map", async (c) => {
+  try {
+    const permitService = new PermitDataService(c.env.DB);
+    const limit = parseInt(c.req.query("limit") || "500");
+    
+    const permits = await permitService.getPermitsForMap(limit);
+    return c.json({ permits });
+  } catch (error) {
+    console.error("Map data error:", error);
+    return c.json({ error: "Failed to fetch map data" }, 500);
+  }
+});
+
+// AI Analysis endpoint
+app.post("/api/ai/analyze", async (c) => {
+  try {
+    const { question, permitIds } = await c.req.json();
+    const permitService = new PermitDataService(c.env.DB);
+    const aiService = new PermitAIService(c.env.AI);
+    
+    // Get recent permits for analysis if no specific IDs provided
+    const permits = await permitService.getPermits(100, 0);
+    const analysis = await aiService.analyzePermitData(permits, question);
+    
+    return c.json({
+      analysis,
+      dataPoints: permits.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("AI analysis error:", error);
+    return c.json({ error: "Failed to generate AI analysis" }, 500);
+  }
+});
+
+// AI Question endpoint
+app.post("/api/ai/question", async (c) => {
+  try {
+    const { question } = await c.req.json();
+    
+    if (!question || typeof question !== 'string') {
+      return c.json({ error: "Question is required" }, 400);
+    }
+    
+    const aiService = new PermitAIService(c.env.AI);
+    const answer = await aiService.answerQuestion(question);
+    
+    return c.json({
+      question,
+      answer,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("AI question error:", error);
+    return c.json({ error: "Failed to process question" }, 500);
+  }
+});
+
+// Dashboard summary endpoint
+app.get("/api/dashboard", async (c) => {
+  try {
+    const permitService = new PermitDataService(c.env.DB);
+    const aiService = new PermitAIService(c.env.AI);
+    
+    // Get basic stats and recent permits
+    const [stats, recentPermits] = await Promise.all([
+      permitService.getPermitStats(),
+      permitService.getPermits(50, 0)
+    ]);
+    
+    // Generate AI insights about recent activity
+    const insights = await aiService.analyzePermitData(
+      recentPermits, 
+      "What are the key trends and insights from recent permit activity?"
+    );
+    
+    return c.json({
+      stats,
+      recentPermits: recentPermits.slice(0, 5), // Just show 5 most recent
+      aiInsights: insights,
+      lastUpdated: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error("Dashboard error:", error);
+    return c.json({ error: "Failed to fetch dashboard data" }, 500);
+  }
 });
 
 export default app; 

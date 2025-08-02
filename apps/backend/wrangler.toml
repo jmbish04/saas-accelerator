@@ -1,17 +1,16 @@
-name = "saas-backend"
+name = "permit-dashboard"
 main = "src/index.ts"
 compatibility_date = "2024-03-01"
 
-kv_namespaces = [
-  { binding = "RATE_LIMIT_KV", id = "RATE_LIMIT_KV" }
-]
+# D1 database for permit data
+[[d1_databases]]
+binding = "DB"
+database_name = "permit-dashboard"
+database_id = "permit-dashboard"
 
-r2_buckets = [
-  { binding = "USER_UPLOADS", bucket_name = "user-uploads" }
-]
+# Workers AI binding
+[ai]
+binding = "AI"
 
 [vars]
-DATABASE_URL = "${DATABASE_URL}"
-CLERK_SECRET_KEY = "${CLERK_SECRET_KEY}"
-STRIPE_SECRET_KEY = "${STRIPE_SECRET_KEY}"
-R2_PUBLIC_DOMAIN = "your-public.r2.dev" 
+# Add any non-sensitive environment variables here 

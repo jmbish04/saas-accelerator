@@ -5,7 +5,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "build": "tsup src/index.ts --minify",
-    "test": "vitest run"
+    "test": "vitest run",
+    "db:generate": "drizzle-kit generate:sqlite",
+    "db:migrate": "wrangler d1 migrations apply permit-dashboard"
   },
   "dependencies": {
     "@repo/db": "workspace:*",
@@ -16,6 +18,7 @@
     "@cloudflare/workers-types": "^4.20231102.0",
     "wrangler": "^3.15.0",
     "tsup": "^7.2.0",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "drizzle-kit": "^0.19.0"
   }
 } 

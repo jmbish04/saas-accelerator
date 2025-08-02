@@ -1,13 +1,11 @@
 import type { Config } from "drizzle-kit";
-import { config } from "dotenv";
-
-config({ path: ".env.local" });
 
 export default {
   schema: "./src/schema.ts",
   out: "./drizzle",
-  driver: "pg",
+  driver: "d1",
   dbCredentials: {
-    connectionString: process.env.DATABASE_URL!,
+    wranglerConfigPath: "../../apps/backend/wrangler.toml",
+    dbName: "permit-dashboard",
   },
 } satisfies Config; 
